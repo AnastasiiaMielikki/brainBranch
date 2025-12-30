@@ -1,18 +1,54 @@
-import { useEffect, useState } from "react";
-import { PlusCircleIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState, useRef } from "react";
+import { FolderIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import api from "../api";
 import ToDoItem from "../components/ToDoItem";
 import Sidebar from "../components/Sidebar";
+import NewCategoryForm from "../components/NewCategoryForm";
 
 function Home() {
   const [todoItems, setTodoItems] = useState([]);
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [completed, setCompleted] = useState(false);
+  const [showAddNewCategoryModal, setShowAddNewCategoryModal] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [category, setCategory] = useState("");
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     getTodoItems();
+    getCategories();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    if (showCategoryDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showCategoryDropdown]);
+
+  const getCategories = () => {
+    api
+      .get("/api/categories/")
+      .then((response) => {
+        const categoryNames = response.data.map((cat) => cat.name);
+        setCategories(categoryNames);
+      })
+      .catch((error) => {
+        console.error("Error fetching categories:", error);
+      });
+  };
 
   const getTodoItems = () => {
     api
@@ -45,9 +81,13 @@ function Home() {
   const createTodoItem = (e) => {
     e.preventDefault();
     api
-      .post("/api/notes/", { title, content: content || "", completed: false })
+      .post("/api/notes/", {
+        title,
+        content: content || "",
+        category: category || "Inbox",
+        completed: false,
+      })
       .then((response) => {
-        console.log(response.data);
         if (response.status === 201) {
           console.log("Note created");
         } else {
@@ -64,6 +104,7 @@ function Home() {
   const clearForm = () => {
     setTitle("");
     setContent("");
+    setCategory("");
     setCompleted(false);
   };
 
@@ -86,9 +127,14 @@ function Home() {
       });
   };
 
+  const handleCategoryAdded = () => {
+    setShowAddNewCategoryModal(false);
+    getCategories();
+  };
+
   return (
     <div className="app_container flex">
-      <Sidebar />
+      <Sidebar categories={categories} onCategoriesChange={getCategories} />
       <div className="min-h-screen flex flex-col items-center grow p-8 bg-gradient-to-br from-blue-400 via-purple-600 to-orange-400">
         <form
           onSubmit={createTodoItem}
@@ -118,6 +164,46 @@ function Home() {
               onChange={(e) => setContent(e.target.value)}
             />
           </div>
+          <div className="relative" ref={dropdownRef}>
+            <button
+              id="add-todo-category-button"
+              type="button"
+              className="text-white"
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+            >
+              <FolderIcon className="size-6 cursor-pointer" />
+            </button>
+            {showCategoryDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200">
+                <div className="py-1 max-h-60 overflow-y-auto">
+                  {categories.length > 0 ? (
+                    categories.map((categoryName, index) => (
+                      <label
+                        key={index}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2"
+                          checked={category === categoryName}
+                          onChange={() => {
+                            setCategory(categoryName);
+                            setShowCategoryDropdown(false);
+                          }}
+                        />
+                        <FolderIcon className="size-4 text-gray-600" />
+                        <span>{categoryName}</span>
+                      </label>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-sm text-gray-500">
+                      No categories yet
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </form>
         <h1 className="text-3xl font-bold mb-4">ToDo List</h1>
         {todoItems.length > 0 ? (
@@ -135,6 +221,23 @@ function Home() {
           <p>You have no ToDo items yet 🙃</p>
         )}
       </div>
+      {showAddNewCategoryModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowAddNewCategoryModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <NewCategoryForm
+              setShowAddNewCategoryModal={setShowAddNewCategoryModal}
+              onClose={() => setShowAddNewCategoryModal(false)}
+              onCategoryAdded={handleCategoryAdded}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

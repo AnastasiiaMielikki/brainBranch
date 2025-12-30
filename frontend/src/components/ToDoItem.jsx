@@ -23,7 +23,7 @@ const ToDoItem = ({ note, onDelete, onUpdate }) => {
         />
         <label
           htmlFor={`note-checkbox-${note.id}`}
-          className="note-checkbox inline-flex items-center justify-center w-5 h-5 border-1 border-gray-300 rounded-sm peer-checked:bg-purple-500"
+          className="note-checkbox inline-flex items-center justify-center w-5 h-5 border-1 border-gray-300 rounded-sm peer-checked:bg-purple-500 cursor-pointer"
         >
           <CheckIcon className="size-4 text-white stroke-2" />
         </label>
@@ -31,6 +31,9 @@ const ToDoItem = ({ note, onDelete, onUpdate }) => {
         <p className="note-content">{note.content}</p>
         <p className="note-created-at text-gray-500 text-sm">
           {formatDate(note.created_at)}
+        </p>
+        <p className="note-category text-gray-300 text-sm">
+          {note.category || "Inbox"}
         </p>
       </div>
 
