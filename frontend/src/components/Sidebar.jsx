@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FolderIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import NewCategoryForm from "./NewCategoryForm";
 
-function Sidebar({ categories = [], onCategoriesChange }) {
+function Sidebar({ categories = [], onCategoriesChange, selectedCategory = "All", onCategorySelect }) {
   const [showAddNewCategoryModal, setShowAddNewCategoryModal] = useState(false);
 
   const addNewCategory = () => {
@@ -34,10 +34,15 @@ function Sidebar({ categories = [], onCategoriesChange }) {
               {categories.map((category, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 p-2 w-full rounded hover:bg-gray-100 cursor-pointer"
+                  className={`flex items-center gap-2 p-2 w-full rounded cursor-pointer ${
+                    selectedCategory === category
+                      ? "bg-blue-100 text-blue-700"
+                      : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => onCategorySelect && onCategorySelect(category)}
                 >
-                  <FolderIcon className="size-5 text-gray-600" />
-                  <span className="text-gray-800">{category}</span>
+                  <FolderIcon className={`size-5 ${selectedCategory === category ? "text-blue-600" : "text-gray-600"}`} />
+                  <span className={selectedCategory === category ? "text-blue-700 font-medium" : "text-gray-800"}>{category}</span>
                 </div>
               ))}
               <button

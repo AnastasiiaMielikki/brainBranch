@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { FolderIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
 import api from "../api";
-import ToDoItem from "../components/ToDoItem";
+import ToDoItem from "../components/ToDoItem.tsx";
 import Sidebar from "../components/Sidebar";
 import NewCategoryForm from "../components/NewCategoryForm";
 
@@ -14,6 +14,7 @@ function Home() {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -43,12 +44,17 @@ function Home() {
       .get("/api/categories/")
       .then((response) => {
         const categoryNames = response.data.map((cat) => cat.name);
-        setCategories(categoryNames);
+        setCategories(["All", ...categoryNames]);
       })
       .catch((error) => {
         console.error("Error fetching categories:", error);
       });
   };
+
+  // Filter todos based on selected category
+  const filteredTodoItems = selectedCategory === "All"
+    ? todoItems
+    : todoItems.filter((item) => item.category === selectedCategory);
 
   const getTodoItems = () => {
     api
@@ -134,7 +140,12 @@ function Home() {
 
   return (
     <div className="app_container flex">
-      <Sidebar categories={categories} onCategoriesChange={getCategories} />
+      <Sidebar
+        categories={categories}
+        onCategoriesChange={getCategories}
+        selectedCategory={selectedCategory}
+        onCategorySelect={setSelectedCategory}
+      />
       <div className="min-h-screen flex flex-col items-center grow p-8 bg-gradient-to-br from-blue-400 via-purple-600 to-orange-400">
         <form
           onSubmit={createTodoItem}
@@ -206,9 +217,9 @@ function Home() {
           </div>
         </form>
         <h1 className="text-3xl font-bold mb-4">ToDo List</h1>
-        {todoItems.length > 0 ? (
+        {filteredTodoItems.length > 0 ? (
           <ul className="flex flex-col gap-4 w-3xl items-center justify-center">
-            {todoItems.map((note) => (
+            {filteredTodoItems.map((note) => (
               <ToDoItem
                 key={note.id}
                 note={note}
@@ -218,7 +229,11 @@ function Home() {
             ))}
           </ul>
         ) : (
-          <p>You have no ToDo items yet 🙃</p>
+          <p>
+            {todoItems.length > 0
+              ? `No items in ${selectedCategory}`
+              : "You have no ToDo items yet 🙃"}
+          </p>
         )}
       </div>
       {showAddNewCategoryModal && (
