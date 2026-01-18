@@ -78,6 +78,19 @@ class CategoryListCreateView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
+class CategoryDeleteView(generics.DestroyAPIView):
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Category.objects.all()
+
+    def perform_destroy(self, instance):
+        # Reassign all notes with this category to "Inbox"
+        Note.objects.filter(category=instance.name).update(category="Inbox")
+        instance.delete()
+
+
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all().order_by("id")
     serializer_class = CategorySerializer

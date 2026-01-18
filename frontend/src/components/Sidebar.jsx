@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { FolderIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
+import { FolderIcon, PlusCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import NewCategoryForm from "./NewCategoryForm";
 
-function Sidebar({ categories = [], onCategoriesChange, selectedCategory = "All", onCategorySelect }) {
+function Sidebar({ categories = [], onCategoriesChange, selectedCategory = "All", onCategorySelect, onCategoryDelete }) {
   const [showAddNewCategoryModal, setShowAddNewCategoryModal] = useState(false);
 
   const addNewCategory = () => {
@@ -31,20 +31,35 @@ function Sidebar({ categories = [], onCategoriesChange, selectedCategory = "All"
         >
           {categories.length > 0 ? (
             <>
-              {categories.map((category, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center gap-2 p-2 w-full rounded cursor-pointer ${
-                    selectedCategory === category
-                      ? "bg-blue-100 text-blue-700"
-                      : "hover:bg-gray-100"
-                  }`}
-                  onClick={() => onCategorySelect && onCategorySelect(category)}
-                >
-                  <FolderIcon className={`size-5 ${selectedCategory === category ? "text-blue-600" : "text-gray-600"}`} />
-                  <span className={selectedCategory === category ? "text-blue-700 font-medium" : "text-gray-800"}>{category}</span>
-                </div>
-              ))}
+              {categories.map((category, index) => {
+                const isCustomCategory = category !== "All" && category !== "Inbox";
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-2 p-2 w-full rounded cursor-pointer group ${
+                      selectedCategory === category
+                        ? "bg-blue-100 text-blue-700"
+                        : "hover:bg-gray-100"
+                    }`}
+                    onClick={() => onCategorySelect && onCategorySelect(category)}
+                  >
+                    <FolderIcon className={`size-5 ${selectedCategory === category ? "text-blue-600" : "text-gray-600"}`} />
+                    <span className={`flex-1 ${selectedCategory === category ? "text-blue-700 font-medium" : "text-gray-800"}`}>{category}</span>
+                    {isCustomCategory && (
+                      <button
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCategoryDelete && onCategoryDelete(category);
+                        }}
+                        title="Delete category"
+                      >
+                        <TrashIcon className="size-4 text-red-500 hover:text-red-700" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
               <button
                 id="add-category-button"
                 className="text-gray-500 hover:text-gray-700 flex items-center gap-2 p-2 w-full rounded hover:bg-gray-100 cursor-pointer"

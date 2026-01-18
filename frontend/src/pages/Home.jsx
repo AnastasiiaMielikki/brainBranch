@@ -138,6 +138,35 @@ function Home() {
     getCategories();
   };
 
+  const deleteCategory = (categoryName) => {
+    // First, find the category ID by name
+    api
+      .get("/api/categories/")
+      .then((response) => {
+        const categoryToDelete = response.data.find((cat) => cat.name === categoryName);
+        if (categoryToDelete) {
+          return api.delete(`/api/categories/delete/${categoryToDelete.id}/`);
+        } else {
+          throw new Error("Category not found");
+        }
+      })
+      .then((response) => {
+        if (response.status === 204) {
+          console.log("Category deleted");
+          // If the deleted category was selected, switch to "All"
+          if (selectedCategory === categoryName) {
+            setSelectedCategory("All");
+          }
+          getCategories();
+          // Refresh todos to reflect category changes (moved to "Inbox")
+          getTodoItems();
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting category:", error);
+      });
+  };
+
   return (
     <div className="app_container flex">
       <Sidebar
@@ -145,6 +174,7 @@ function Home() {
         onCategoriesChange={getCategories}
         selectedCategory={selectedCategory}
         onCategorySelect={setSelectedCategory}
+        onCategoryDelete={deleteCategory}
       />
       <div className="min-h-screen flex flex-col items-center grow p-8 bg-gradient-to-br from-blue-400 via-purple-600 to-orange-400">
         <form
